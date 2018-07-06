@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE XML>
+
+<decorators defaultdir="/WEB-INF/views/decorator">
+	<!-- hello에 대한 요청이 들어오면 적용시키는 레이아웃 선언 -->
+	<decorator name="main" page="headerAndFooter.jsp">
+		<pattern>/member/*</pattern>
+		<pattern>/review/*</pattern>
+		<pattern>/index</pattern>
+		<pattern>/admin/*</pattern>
+		<pattern>/movie/*</pattern>
+		
+	</decorator>
+	
+	
+	관리자 페이지의 레이아웃                  
+	<decorator name="member" page="login_header.jsp">
+		<pattern>/member/login</pattern>
+		<pattern>/member/join</pattern>
+		<pattern>/member/pwFind</pattern>
+		<pattern>/member/userConf</pattern>
+		<pattern>/member/userConfProcess</pattern>
+		<pattern>/member/pwfind1</pattern>
+		<pattern>/member/pwfind2</pattern>
+		<pattern>/member/pwfind3</pattern>
+		<pattern>/member/pwfindProcess</pattern>
+		<pattern>/member/naverLoginProcess</pattern>
+		<pattern>/member/loginProcess</pattern>
+	</decorator>
+
+</decorators>

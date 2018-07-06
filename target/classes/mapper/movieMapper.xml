@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="spring.project.mappers.movieMapper">
+
+	<select id="movieMapper" resultType="spring.project.admin.dto.GenreDTO">
+		SELECT * FROM GENRE
+	</select>
+
+
+	<select id="getGenreNumber" resultType="int">
+
+		SELECT gen_no FROM GENRE
+		WHERE name = #{genre}
+	</select>
+
+	<select id="genreMovieList" resultType="spring.project.movie.dto.MovieInfoDTO">
+		SELECT mov_no, title,
+		trailer, poster, release, rtime, grade, attd, summary,
+		reg_date,
+		mod_date, country FROM
+		(SELECT mov_no, title, trailer, poster, release,
+		rtime, grade, attd, summary,
+		mv_reg_date reg_date,mv_mod_date
+		mod_date,country FROM
+		(SELECT mv.mov_no, g.gen_no, mv.title,g.name,
+		mv.trailer, mv.poster,
+		mv.release, mv.rtime, mv.grade, mv.attd,
+		mv.summary, mv.reg_date
+		mv_reg_date, mv.mod_date mv_mod_date,
+		mv.country, g.reg_date
+		FROM movie_info mv, ge_rel gr, genre g
+		WHERE
+		mv.mov_no = gr.mov_no AND g.gen_no = gr.gen_no)
+		WHERE GEN_NO =
+		#{genre_num})
+		WHERE mov_no NOT IN (SELECT mov_no FROM rat_rel WHERE id
+		= #{id})
+	</select>
+
+	<select id="topMovieList" resultType="spring.project.movie.dto.MovieInfoDTO">
+		SELECT TT.mov_no mov_no,
+		title, trailer, poster, release, rtime, grade,
+		attd, summary, reg_date,
+		mod_date, country FROM
+		(SELECT ROWNUM rank, mov_no FROM
+		(SELECT mov_no,
+		ROUND(AVG(rat),1) avg FROM rat_rel WHERE mov_no NOT IN(SELECT
+		mov_no
+		FROM rat_rel WHERE id=#{id})
+		GROUP BY mov_no
+		ORDER BY avg DESC)) TT,
+		movie_info
+		WHERE TT.mov_no = movie_info.mov_no
+		ORDER BY rank
+	</select>
+
+	<select id="chkRating" resultType="int">
+		SELECT count(*) FROM rat_rel
+		WHERE mov_no=#{mov_no} and id=#{id}
+	</select>
+
+	<update id="updateRat">
+		UPDATE rat_rel SET rat = #{rat} WHERE id=#{id} AND
+		mov_no = #{mov_no}
+	</update>
+
+	<insert id="insertRat">
+		INSERT INTO rat_rel VALUES(#{mov_no},#{id},#{rat})
+	</insert>
+
+	<select id="findTaste" resultType="int">
+	<![CDATA[
+	SELECT gen_no FROM (SELECT id, gen_no, count_gen_no, ROUND(RATIO_TO_REPORT(count_gen_no) OVER (),2)*100 AS gen_no_ratio
+	FROM (SELECT id, gen_no, COUNT(gen_no) count_gen_no
+	FROM (SELECT id, gen_no ,rat  FROM rat_rel RAT, ge_rel GEN WHERE id = #{id} AND RAT.mov_no = GEN.mov_no)
+	GROUP BY id, gen_no
+	ORDER BY count_gen_no DESC))
+	WHERE gen_no_ratio >=20
+	]]>
+	</select>
+
+	<select id="withoutMe" resultType="String">
+		SELECT id FROM member WHERE id
+		NOT IN(#{id})
+
+	</select>
+
+	<select id="researchTasteMovieNo" resultType="int">
+		SELECT mov_no FROM
+		(SELECT * FROM
+		(SELECT id, RAT.mov_no, RAT, gen_no
+		FROM rat_rel RAT,
+		ge_rel GEN
+		WHERE RAT.mov_no = GEN.mov_no AND id = #{others} AND gen_no
+		= #{tasteNum}
+		ORDER BY RAT DESC))
+		WHERE mov_no NOT IN(SELECT mov_no FROM
+		rat_rel WHERE id = #{id})
+
+
+	</select>
+
+	<select id="chkTitle" resultType="int">
+		SELECT count(*) FROM
+		(SELECT
+		mov_no FROM ge_rel WHERE mov_no = #{recommendatedMov} AND gen_no =
+		#{tasteNum}) G_REL, movie_info MOVIE
+		WHERE G_REL.mov_no = MOVIE.mov_no
+	</select>
+
+	<select id="findMovName" resultType="String">
+		SELECT MOVIE.title FROM
+		(SELECT mov_no FROM ge_rel WHERE mov_no = #{recommendatedMov} AND
+		gen_no =
+		#{tasteNum}) G_REL, movie_info MOVIE
+		WHERE G_REL.mov_no =
+		MOVIE.mov_no
+
+	</select>
+
+	<select id="chkGenName" resultType="int">
+		SELECT count(*) FROM genre
+		WHERE gen_no = #{taste_gNum}
+
+	</select>
+
+	<select id="findGenreName" resultType="String">
+		SELECT name FROM genre
+		WHERE gen_no = #{taste_gNum}
+
+	</select>
+
+	<select id="makeMovieInfoDTO" resultType="spring.project.movie.dto.MovieInfoDTO">
+		SELECT * FROM
+		movie_info WHERE mov_no = #{mov_no}
+
+	</select>
+
+	<select id="getFavoriteDirector" resultType="int">
+	<![CDATA[
+	SELECT dir_no FROM (SELECT dir_no, dir_count, ROUND(RATIO_TO_REPORT(dir_count) OVER (), 2)*100 AS favorite_director FROM
+	(SELECT dir_no,COUNT(dir_no) dir_count FROM
+	(SELECT mov_no FROM rat_rel WHERE id=#{id}) RAT, dir_rel DIR
+	WHERE RAT.mov_no = DIR.mov_no
+	GROUP BY dir_no
+	ORDER BY dir_count ))
+	WHERE favorite_director > 5
+	]]>
+	</select>
+
+	<select id="getDirectorRecommendMovieList" parameterType="hashmap"
+		resultType="int">
+
+
+
+		
+	
+	SELECT * FROM (SELECT * FROM (SELECT mov_no FROM
+	(SELECT mov_no, ROUND(RATIO_TO_REPORT(avg_rat) OVER (),2)*100 AS rat_ratio FROM
+	(SELECT mov_no, AVG(rat) avg_rat FROM
+	(SELECT RAT.mov_no, rat FROM
+	(SELECT  * FROM dir_rel <if test="dirLength > 0">WHERE dir_no IN(#{repetitionFirst}<foreach collection="dir_no_list" item="dir_no_list">,#{dir_no_list.value}</foreach>)</if>) DIR, rat_rel RAT
+	WHERE DIR.mov_no = RAT.mov_no AND id NOT IN(#{id})) GROUP BY mov_no))
+	<![CDATA[
+	WHERE rat_ratio > 10)
+	]]>
+			<if test="repetitionLength > 1">
+				WHERE mov_no NOT IN(SELECT mov_no FROM rat_rel WHERE id = #{id}) AND
+				mov_no
+				NOT IN
+
+				<foreach collection="repetition" index="i" item="repetition" open="(" separator="," close=")">
+					#{repetition}
+				</foreach>
+					)
+			</if>
+		<![CDATA[WHERE ROWNUM <=5 ]]>
+
+
+	</select>
+
+<select id="getDirectorNameList" resultType="String">
+
+SELECT director.name FROM 
+(SELECT dir_no FROM dir_rel WHERE mov_no = #{mov_no}) DREL, director
+WHERE DREL.dir_no = director.dir_no
+</select>
+
+</mapper>

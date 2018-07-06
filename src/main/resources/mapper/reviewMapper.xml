@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="spring.project.mapper.reviewMapper">
+
+	<!-- 리뷰 목록 보기 -->
+	<select id="list" resultType="spring.project.review.dto.ReviewDto">
+		SELECT * FROM (
+		SELECT rownum rnum, review_no, title, summary, hit,
+		good, reg_date, id, mov_no, title_1, poster
+		FROM (
+		SELECT r.review_no,
+		r.title,r.summary, r.hit,
+		r.good, r.reg_date, r.id, r.mov_no, i.title title_1, i.poster
+		FROM movie_review r, movie_info i
+		where r.mov_no = i.mov_no
+		<include refid="search"></include>
+		ORDER BY ${sort} DESC
+		))WHERE rnum BETWEEN #{cri.startRow} AND #{cri.endRow}
+	</select>
+
+	<!-- 데이터 개수 -->
+	<select id="getRow" resultType="Integer">
+		SELECT count(*)
+		FROM movie_review
+		<include refid="search"></include>
+	</select>
+
+	<!-- 조회수 1증가 -->
+	<update id="increase">
+		UPDATE movie_review SET hit = hit +1
+		WHERE review_no =
+		#{no}
+	</update>
+
+	<!-- 검색 조건에 추가 되는 쿼리 -->
+	<sql id="search">
+
+		<!-- <if test='searchType != "n" and searchType != null'> : OK -->
+		<if
+			test="searchType != 'n'.toString() and searchType != null and searchType != ''.toString()">
+			<!-- where 조건문을 일부러 false로 줘서 or식으로 작성할 수 있게 한다. (and면 true로 설정) -->
+			where 1=0
+			<!-- 제목 검색 추가 -->
+			<if test="titleType">
+				or title like CONCAT(CONCAT('%',#{keyword}),'%')
+			</if>
+			<!-- 내용 검색 추가 -->
+			<if test="contentType">
+				or content like CONCAT(CONCAT('%',#{keyword}),'%')
+			</if>
+			<!-- 작성자 검색 추가 -->
+			<if test="writerType">
+				or writer like CONCAT(CONCAT('%',#{keyword}),'%')
+			</if>
+		</if>
+	</sql>
+
+
+	<!-- 리뷰 보기 -->
+	<select id="view" resultType="spring.project.review.dto.ReviewDto">
+		SELECT review_no, title, id, hit, mov_no, reg_date, summary, title_1, poster
+		FROM(
+		SELECT r.review_no, r.title, r.id, r.hit, r.mov_no, r.reg_date, r.summary,
+		i.title title_1, i.poster
+		FROM movie_review r, movie_info i
+		WHERE review_no = #{review_no}
+		and i.mov_no=r.mov_no)
+	</select>
+
+
+	<!-- 리뷰 쓰기 -->
+	<insert id="write">
+		insert into movie_review(review_no, title, id,
+		summary,mov_no)
+		values(movie_review_seq.nextval,#{title},#{id},#{summary},#{mov_no})
+	</insert>
+
+	<!-- 리뷰 수정 -->
+	<update id="update">
+		UPDATE movie_review
+		SET
+		mov_no = #{mov_no},
+		title =
+		#{title},
+		summary = #{summary}
+		WHERE review_no = #{review_no}
+	</update>
+
+	<!-- 리뷰 삭제 -->
+	<delete id="delete">
+		delete
+		from movie_review
+		where review_no = #{review_no}
+	</delete>
+
+	<!-- 영화 번호 가져오기 -->
+	<select id="getMov_no" resultType="spring.project.movie.dto.MovieVO">
+		select mov_no, title, poster
+		from movie_info
+	</select>
+
+</mapper> 

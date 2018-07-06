@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="spring.project.mapper.memberMapper">
+	<!-- 	로그인 -->
+	<select id="login" resultType="spring.project.member.dto.UserVO">
+		SELECT id, name, grade FROM member WHERE id=#{id} and pw=#{pw}
+	</select>
+	<!-- 	네이버 로그인 -->
+	<select id="n_login" resultType="spring.project.member.dto.UserVO">
+		SELECT id, name, grade FROM member WHERE id=#{id}
+	</select>
+	<!-- 회원가입 -->
+	<insert id="insertMember" parameterType="spring.project.member.dto.MemberDto">
+    	 <![CDATA[
+    	 	insert into member(id,pw,name,img,reg_date,mod_date,grade) 
+    	 	values(
+    	 	 #{id, jdbcType=VARCHAR},
+    	 	 #{pw, jdbcType=VARCHAR},
+    	 	 #{name, jdbcType=VARCHAR}, 
+    	 	 #{img, jdbcType=VARCHAR}, 
+    	 	 #{reg_date, jdbcType=VARCHAR}, 
+    	 	 #{mod_date, jdbcType=VARCHAR}, 
+    	 	 #{grade, jdbcType=VARCHAR})
+    	 ]]>
+	</insert>
+	<!-- id존재 여부 -->
+	<select id="confirmId" resultType="string">
+    		<![CDATA[
+    	 		select id from member where id=#{id, jdbcType=VARCHAR}
+    		 ]]>
+	</select>
+	<!-- 비밀번호 찾기 : 토큰 발급 -->
+	<update id="updateMemberToken" parameterType="spring.project.member.dto.MemberDto">
+		<![CDATA[
+    	 		update member 
+    	 		set 
+    	 		token=  #{token, jdbcType=VARCHAR},  
+    	 		mod_date= #{mod_date, jdbcType=VARCHAR}, 
+    	 		reg_date= #{reg_date, jdbcType=VARCHAR}
+    	 		where 
+    	 		id = #{id, jdbcType=VARCHAR}
+    		 ]]>
+	</update>
+	<!-- 비밀번호 찾기, 아이디 토큰 인증 -->
+	<select id="updateMemberConfirm" resultType="String">                                       
+		<![CDATA[
+    	 		select token from member where id=#{id, jdbcType=VARCHAR}
+    		 ]]>
+	</select>
+	<!-- 비밀번호 찾기 : 비밀번호 변경 -->
+	<update id="updateMemberPWC" parameterType="spring.project.member.dto.MemberDto">
+		<![CDATA[
+    	 		update member 
+    	 		set 
+    	 		pw=#{pw, jdbcType=VARCHAR}, 
+    	 		mod_date=#{mod_date, jdbcType=VARCHAR}, 
+    	 		reg_date=#{reg_date, jdbcType=VARCHAR} 
+    	 		where id = #{id, jdbcType=VARCHAR}
+    		 ]]>
+	</update>
+	<!-- 회원인증 -->
+	<select id="userCheck" resultType="string">
+		<![CDATA[ 
+		select pw from member where id= #{id}
+		 ]]>
+	</select>
+	<!-- 회원정보 가져오기 -->
+	<select id="getMember" resultType="spring.project.member.dto.MemberDto">
+	<![CDATA[ 
+		select id,pw,name,img,reg_date,mod_date,grade from member where id=#{id}
+		 ]]>
+	</select>
+	<!-- 회원목록 가져오기 -->
+	<select id="getList" resultType="spring.project.member.dto.MemberDto">
+		<![CDATA[ 
+		select id from member
+		 ]]>
+	</select>
+	<!-- 회원정보 수정 -->
+	<update id="updateMember" parameterType="spring.project.member.dto.MemberDto">
+		update member set
+		pw=#{pw, jdbcType=VARCHAR}, 
+		name=#{name, jdbcType=VARCHAR}, 
+		img=#{img, jdbcType=VARCHAR}, 
+		mod_date=#{mod_date, jdbcType=VARCHAR},
+		reg_date=#{reg_date, jdbcType=VARCHAR}, 
+		grade=#{grade, jdbcType=VARCHAR} 
+		where id = #{id, jdbcType=VARCHAR}
+	</update>
+	<!-- 회원정보 수정 : 비밀번호 -->
+	<update id="updateMemberPW" parameterType="spring.project.member.dto.MemberDto">
+		update member set
+		pw=#{pw, jdbcType=VARCHAR}, 
+		name=#{name, jdbcType=VARCHAR}, 
+		mod_date=#{mod_date, jdbcType=VARCHAR}, 
+		reg_date=#{reg_date, jdbcType=VARCHAR}
+		where id = #{id, jdbcType=VARCHAR}
+	</update>
+	<!-- 닉네임 변경 -->
+	<update id="updateMemberID" parameterType="spring.project.member.dto.MemberDto">
+		update member 
+		set
+		name=#{name, jdbcType=VARCHAR}, 
+		mod_date=#{mod_date, jdbcType=VARCHAR}, 
+		reg_date=#{reg_date, jdbcType=VARCHAR} 
+		where id =#{id, jdbcType=VARCHAR}
+	</update>
+
+</mapper>
